@@ -125,7 +125,7 @@ public class Main extends Application
 		for (final Circle c : circles)
 		{
 			if (Intersects(c, biggest))
-				c.setFill(Color.BLUE); // hardcoded color value
+				c.setFill(Color.GREEN); // hardcoded color value
 		}
 	}
 
