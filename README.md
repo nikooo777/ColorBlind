@@ -3,9 +3,13 @@ A Java application to generate reverse colorblindness tests
 
 
 This application is intended to:
+
 -Learn javaFX, which i will use during this last university year
+
 -Practice programming (damn, i need to improve my OOP skills!)
+
 -Provide the colorblind community (and thus myself too) a tool to draw reverse colorblind tests
+
 -Have fun
 
 
@@ -40,6 +44,7 @@ As viewed by a color regular, its just a block of numbers. As viewed by someone 
 21774447177921721772276822792127964449612
 79124444444444444444444444444444444447217
 89267892677298912161279672716721912179677
+
 a clearly identifiable shape.
 
 
