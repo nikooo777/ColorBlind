@@ -50,55 +50,17 @@ public class Main extends Application
 			// set the scene in the stage
 			primaryStage.setScene(scene);
 
+			// pop up the window
+			primaryStage.show();
+
 			// define the biggest circle which is the hidden round
 			final Circle biggest = new Circle(primaryScreenBounds.getHeight() / 3);
 			biggest.setCenterX(primaryScreenBounds.getWidth() / 2.);
 			biggest.setCenterY(primaryScreenBounds.getHeight() / 2.);
 			biggest.setOpacity(0);
 
-			// prepare a list of circles to be filled
-			final List<Circle> circles = new ArrayList<>();
-
-			// generate X unique circles
-			for (int i = 0; i < 4000; i++)
-			{
-				// circle holder
-				Circle c;
-				// Condition for which the circle is valid
-				boolean condition = true;
-
-				// if the circle overlaps to other circles then recreate it
-				do
-				{
-					// generate random circle
-					c = circleFactory(scene.getWidth(), scene.getHeight());
-
-					// set the condition to true again
-					condition = true;
-
-					// check against all previous circles if there are previous circles
-					if (circles.isEmpty())
-					{
-						break;
-					}
-
-					for (final Circle circle : circles)
-					{
-						if (overlap(c, circle))
-						{
-							condition = false;
-							break;
-						}
-					}
-					// keep on generating the next circle until it doesn't overlap with any of the previous ones
-				} while (condition == false);
-
-				// at this point the circle is valid so it's added to the list
-				circles.add(c);
-
-				// debug message
-				System.out.println("Added circle! [" + i + "]");
-			}
+			// generate all circles
+			final List<Circle> circles = generateCircles(scene);
 
 			// debug message
 			System.out.println("Successfully generated all circles!");
@@ -110,13 +72,58 @@ public class Main extends Application
 			root.getChildren().addAll(circles);
 			root.getChildren().add(biggest);
 
-			// draw the whole scene
-			primaryStage.show();
-
 		} catch (final Exception e)
 		{
 			e.printStackTrace();
 		}
+	}
+
+	private List<Circle> generateCircles(final Scene scene)
+	{
+		// prepare a list of circles to be filled
+		final List<Circle> circles = new ArrayList<>();
+
+		// generate X unique circles
+		for (int i = 0; i < 4000; i++)
+		{
+			// circle holder
+			Circle c;
+			// Condition for which the circle is valid
+			boolean condition = true;
+
+			// if the circle overlaps to other circles then recreate it
+			do
+			{
+				// generate random circle
+				c = circleFactory(scene.getWidth(), scene.getHeight());
+
+				// set the condition to true again
+				condition = true;
+
+				// check against all previous circles if there are previous circles
+				if (circles.isEmpty())
+				{
+					break;
+				}
+
+				for (final Circle circle : circles)
+				{
+					if (overlap(c, circle))
+					{
+						condition = false;
+						break;
+					}
+				}
+				// keep on generating the next circle until it doesn't overlap with any of the previous ones
+			} while (condition == false);
+
+			// at this point the circle is valid so it's added to the list
+			circles.add(c);
+
+			// debug message
+			System.out.println("Added circle! [" + i + "]");
+		}
+		return circles;
 	}
 
 	// draws the circles intersecting the main figure (at this stage it's a circle)
