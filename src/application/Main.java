@@ -25,7 +25,7 @@ public class Main extends Application {
 	private static final int MINRAD = 4;
 	private static final int NCIRCLES = 5000;
 	static Random rand;
-
+	int test;
 	private static final int NUMBER_THREAD_AVAILABLE = Runtime.getRuntime()
 			.availableProcessors();
 	// up the memory barrier
