@@ -15,8 +15,8 @@ import javafx.stage.Stage;
 
 public class Main extends Application
 {
-	private static final int GENERATEDCIRCLES = 60000;
-	private static final int MAXRAD = 11;
+	private static final int GENERATEDCIRCLES = 6500;
+	private static final int MAXRAD = 15;
 	private static final int MINRAD = 5;
 	static Random rand;
 

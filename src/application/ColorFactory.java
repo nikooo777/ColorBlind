@@ -90,6 +90,6 @@ public class ColorFactory
 
 	public static Color MagentaSecondary()
 	{
-		return new Color(normalize(255), normalize(0), normalize(167), 1);
+		return new Color(normalize(255), normalize(0), normalize(170), 1);
 	}
 }
