@@ -15,7 +15,7 @@ import javafx.stage.Stage;
 
 public class Main extends Application
 {
-	private static final int GENERATEDCIRCLES = 6500;
+	private static final int GENERATEDCIRCLES = 5000;
 	private static final int MAXRAD = 15;
 	private static final int MINRAD = 5;
 	static Random rand;
@@ -23,57 +23,52 @@ public class Main extends Application
 	@Override
 	public void start(Stage primaryStage /* which is the main window */)
 	{
-		try
-		{
-			// set the title
-			primaryStage.setTitle("Reverse Colorblind Message Encrypter");
-			// root layout to be inserted in the scene
-			final BorderPane root = new BorderPane();
+		// set the title
+		primaryStage.setTitle("Reverse Colorblind Message Encrypter");
+		// root layout to be inserted in the scene
+		final BorderPane root = new BorderPane();
 
-			// for the sake of fun, get the primary screen size and set the window to be that size without "maximizing" it
-			final Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+		// for the sake of fun, get the primary screen size and set the window to be that size without "maximizing" it
+		final Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
 
-			// scene containing the root layout
-			final Scene scene = new Scene(root, primaryScreenBounds.getWidth(), primaryScreenBounds.getHeight());
+		// scene containing the root layout
+		final Scene scene = new Scene(root, primaryScreenBounds.getWidth(), primaryScreenBounds.getHeight());
 
-			// set Stage boundaries to visible bounds of the main screen
-			primaryStage.setX(primaryScreenBounds.getMinX());
-			primaryStage.setY(primaryScreenBounds.getMinY());
-			primaryStage.setWidth(primaryScreenBounds.getWidth());
-			primaryStage.setHeight(primaryScreenBounds.getHeight());
+		// set Stage boundaries to visible bounds of the main screen
+		primaryStage.setX(primaryScreenBounds.getMinX());
+		primaryStage.setY(primaryScreenBounds.getMinY());
+		primaryStage.setWidth(primaryScreenBounds.getWidth());
+		primaryStage.setHeight(primaryScreenBounds.getHeight());
 
-			// apply css styles (such as the background color)
-			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+		// apply css styles (such as the background color)
+		scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 
-			// set the scene in the stage
-			primaryStage.setScene(scene);
+		// set the scene in the stage
+		primaryStage.setScene(scene);
 
-			// pop up the window
-			primaryStage.show();
+		// pop up the window
+		primaryStage.show();
 
-			// define the biggest circle which is the hidden round
-			final Circle biggest = new Circle(primaryScreenBounds.getHeight() / 3);
-			biggest.setCenterX((primaryScreenBounds.getWidth() / 2.) * rand.nextDouble());
-			biggest.setCenterY(primaryScreenBounds.getHeight() / 2.);
-			biggest.setOpacity(0);
+		// define the biggest circle which is the hidden round
+		final Circle biggest = new Circle(primaryScreenBounds.getHeight() / 3);
+		biggest.setCenterX((primaryScreenBounds.getWidth() / 2.) * rand.nextDouble());
+		biggest.setCenterY(primaryScreenBounds.getHeight() / 2.);
+		biggest.setOpacity(0);
 
-			// generate all circles
-			final List<Circle> circles = generateCircles(scene);
+		// generate all circles
+		final long pasttime = System.currentTimeMillis();
+		final List<Circle> circles = generateCircles(scene);
+		System.out.println("Generating " + GENERATEDCIRCLES + " took exactly " + (System.currentTimeMillis() - pasttime) / 1000. + " seconds");
 
-			// debug message
-			System.out.println("Successfully generated all circles!");
+		// debug message
+		System.out.println("Successfully generated all circles!");
 
-			// change the color to the circles that have to pop
-			drawSecrets(biggest, circles);
+		// change the color to the circles that have to pop
+		drawSecrets(biggest, circles);
 
-			// add all the circles to the layout
-			root.getChildren().addAll(circles);
-			root.getChildren().add(biggest);
-
-		} catch (final Exception e)
-		{
-			e.printStackTrace();
-		}
+		// add all the circles to the layout
+		root.getChildren().addAll(circles);
+		root.getChildren().add(biggest);
 	}
 
 	private List<Circle> generateCircles(final Scene scene)
