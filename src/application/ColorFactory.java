@@ -3,6 +3,7 @@ package application;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 
 /*
  * colors to use:
@@ -22,16 +23,20 @@ import javafx.scene.paint.Color;
  */
 public class ColorFactory
 {
-	private static final Color DARKGREEN = new Color(normalize(0), normalize(65), normalize(1), 1);
-	private static final Color DARKBROWN = new Color(normalize(75), normalize(56), normalize(0), 1);
-	private static final Color BLUISH = new Color(normalize(141), normalize(161), normalize(222), 1);
-	private static final Color PINKISH = new Color(normalize(169), normalize(148), normalize(224), 1);
-	private static final Color GREEN = new Color(normalize(0), normalize(174), normalize(0), 1);
-	private static final Color DARKRED = new Color(normalize(110), normalize(0), normalize(0), 1);
-	private static final Color BLUE = new Color(normalize(31), normalize(31), normalize(248), 0.8);
-	private static final Color RED = new Color(normalize(255), normalize(34), normalize(51), 1);
-	private static final Color GREY = new Color(normalize(119), normalize(123), normalize(140), 1);
-	private static final Color ORANGE = new Color(normalize(242), normalize(142), normalize(244), 1);
+	private static final int MAXOPACITY = 1;
+	private static final double MINOPACITY = 0.5;
+	private static final Color DARKGREEN = new Color(normalize(0), normalize(65), normalize(1), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
+	private static final Color DARKBROWN = new Color(normalize(75), normalize(56), normalize(0), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
+	private static final Color BLUISH = new Color(normalize(141), normalize(161), normalize(222), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
+	private static final Color PINKISH = new Color(normalize(169), normalize(148), normalize(224), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
+	private static final Color GREEN = new Color(normalize(0), normalize(174), normalize(0), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
+	private static final Color DARKRED = new Color(normalize(110), normalize(0), normalize(0), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
+	private static final Color BLUE = new Color(normalize(31), normalize(31), normalize(248), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
+	private static final Color RED = new Color(normalize(255), normalize(34), normalize(51), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
+	private static final Color GREY = new Color(normalize(119), normalize(123), normalize(140), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
+	private static final Color ORANGE = new Color(normalize(242), normalize(142), normalize(244), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
+
+	private static boolean toggle = true;
 
 	private static double normalize(double value)
 	{
@@ -64,8 +69,27 @@ public class ColorFactory
 			return BLUE;
 	}
 
-	public static Color randomC()
+	public static Color RandomDaltonize(final Circle c)
 	{
-		return new Color(normalize(255), normalize(0), normalize(157), 1);
+		toggle = !toggle;
+		if (toggle)
+			return BLUISH;
+		else
+			return PINKISH;
+	}
+
+	/*
+	 * -------------------------------------------------------------------
+	 * Second method
+	 * -------------------------------------------------------------------
+	 */
+	public static Color MagentaMain()
+	{
+		return new Color(normalize(255), normalize(0), normalize(155), 1);
+	}
+
+	public static Color MagentaSecondary()
+	{
+		return new Color(normalize(255), normalize(0), normalize(167), 1);
 	}
 }
