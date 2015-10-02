@@ -29,7 +29,7 @@ public class CircleMath
 		final double distance = distance(a, b);
 
 		// before doing an intense calculation quickly check if they're far apart
-		if (minrad + maxrad < distance - 10)
+		if (minrad + maxrad < distance)
 			return false;
 
 		// do intense calculations
