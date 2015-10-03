@@ -5,15 +5,17 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
 public class CircleFactory
 {
-	private static final int GENERATEDCIRCLES = 4000;
+	private static final int GENERATEDCIRCLES = 3000;
 	private static final int MAXRAD = 15;
 	private static final int MINRAD = 5;
 
-	public static List<Circle> generateCircles(final Scene scene)
+	public static List<Circle> generateCircles(final Pane layout)
 	{
 		long curtime;
 		int flagcount = 0;
@@ -33,7 +35,7 @@ public class CircleFactory
 			do
 			{
 				// generate random circle
-				c = circleFactory(scene.getWidth(), scene.getHeight());
+				c = circleFactory(layout.getWidth(), layout.getHeight());
 
 				// set the condition to true again
 				condition = true;
@@ -72,7 +74,7 @@ public class CircleFactory
 	}
 
 	// random circles factory
-	private static Circle circleFactory(double width, double height)
+	private static Circle circleFactory(final double width, final double height)
 	{
 
 		final Circle c = new Circle();
@@ -91,9 +93,32 @@ public class CircleFactory
 		c.setCenterY(y_position);
 
 		// set the color of the circle
-		c.setFill(ColorFactory.MagentaMain());
+		c.setFill(ColorFactory.magentaMain());
 
 		// Finally return the circle
 		return c;
+	}
+
+	public static Circle shapeCircle(final Scene scene)
+	{
+		// define the biggest circle which is the hidden round
+		final Circle shape = new Circle(scene.getHeight() / 3);
+		shape.setCenterX(scene.getWidth() * ThreadLocalRandom.current().nextDouble(0.1, 0.9));
+		shape.setCenterY(scene.getHeight() / 2.);
+		shape.setOpacity(0);
+		return shape;
+	}
+
+	// draws the circles intersecting the main figure (at this stage it's a circle)
+	public static void drawSecrets(final Circle biggest, final List<Circle> circles, final Color prefColor)
+	{
+		final Color fill = (prefColor != null) ? prefColor : ColorFactory.magentaSecondary();
+		for (final Circle c : circles)
+		{
+			if (CircleMath.Intersects(c, biggest))
+			{
+				c.setFill(fill);
+			}
+		}
 	}
 }

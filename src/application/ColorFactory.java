@@ -2,8 +2,18 @@ package application;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+import javafx.beans.value.ChangeListener;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 /*
  * colors to use:
@@ -35,10 +45,12 @@ public class ColorFactory
 	private static final Color RED = new Color(normalize(255), normalize(34), normalize(51), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
 	private static final Color GREY = new Color(normalize(119), normalize(123), normalize(140), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
 	private static final Color ORANGE = new Color(normalize(242), normalize(142), normalize(244), ThreadLocalRandom.current().nextDouble(MINOPACITY, MAXOPACITY));
+	private static final Color MAGENTAMAIN = new Color(normalize(255), normalize(0), normalize(155), 1);
+	private static final Color MAGENTASECONDARY = new Color(normalize(255), normalize(0), normalize(170), 1);
 
 	private static boolean toggle = true;
 
-	private static double normalize(double value)
+	private static double normalize(final double value)
 	{
 		return value / 255.;
 	}
@@ -83,13 +95,53 @@ public class ColorFactory
 	 * Second method
 	 * -------------------------------------------------------------------
 	 */
-	public static Color MagentaMain()
+	public static Color magentaMain()
 	{
-		return new Color(normalize(255), normalize(0), normalize(155), 1);
+		return MAGENTAMAIN;
 	}
 
-	public static Color MagentaSecondary()
+	public static Color magentaSecondary()
 	{
-		return new Color(normalize(255), normalize(0), normalize(170), 1);
+		return MAGENTASECONDARY;
+	}
+
+	public static Color colorPicker()
+	{
+		final Stage window = new Stage();
+		window.initModality(Modality.APPLICATION_MODAL);
+		window.setTitle("Color picker");
+		window.setMinWidth(250);
+		window.setMinHeight(250);
+
+		final Label label = new Label("move the slider as far left as possible so that you can see the inner circle");
+		label.setAlignment(Pos.CENTER);
+
+		final Circle outerCircle = new Circle(50);
+		final Circle innerCircle = new Circle(30);
+		outerCircle.setFill(magentaMain());
+		innerCircle.setFill(magentaSecondary());
+		// final Shape wholeCircle = Shape.subtract(outerCircle, innerCircle);
+		final Slider slider = new Slider(155, 190, 170);
+		slider.valueProperty().addListener((ChangeListener<Number>) (ov, old_val, new_val) ->
+		{
+			innerCircle.setFill(new Color(normalize(255), normalize(0), normalize(new_val.doubleValue()), 1));
+		});
+
+		final Button okButton = new Button("Select current");
+		okButton.setOnAction(e ->
+		{
+			window.close();
+		});
+
+		final VBox layout = new VBox(20);
+		final StackPane stackCircle = new StackPane();
+		stackCircle.getChildren().addAll(outerCircle, innerCircle);
+		layout.getChildren().addAll(label, stackCircle, slider, okButton);
+
+		final Scene scene = new Scene(layout);
+		window.setScene(scene);
+		window.show();
+		return (Color) innerCircle.getFill();
+
 	}
 }
