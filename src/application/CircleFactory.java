@@ -11,7 +11,7 @@ import javafx.scene.shape.Circle;
 
 public class CircleFactory
 {
-	private static final int GENERATEDCIRCLES = 3000;
+	private static final int GENERATEDCIRCLES = 4000;
 	private static final int MAXRAD = 15;
 	private static final int MINRAD = 5;
 
@@ -54,6 +54,9 @@ public class CircleFactory
 						break;
 					}
 				}
+				// if the diff time is too much for this cycle then abort (2 seconds)
+				if ((System.currentTimeMillis() - curtime) > 500)
+					break;
 				// keep on generating the next circle until it doesn't overlap with any of the previous ones
 			} while (condition == false);
 

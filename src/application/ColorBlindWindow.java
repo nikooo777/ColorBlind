@@ -6,6 +6,9 @@ import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -23,6 +26,9 @@ public class ColorBlindWindow
 	private final VBox verticalLayout;
 	private final Button button, button2, button3;
 	private Color prefColor;
+	private final MenuItem item1;
+	private final Menu menu1;
+	private final MenuBar mb;
 
 	public ColorBlindWindow()
 	{
@@ -49,11 +55,26 @@ public class ColorBlindWindow
 		// nodes
 		this.button = new Button("Real Reverse CB");
 		this.button2 = new Button("Confusion Reverse CB");
+		this.button2.setDisable(true);
 		this.button3 = new Button("Fix color for method 1");
+
+		// menubar
+		this.mb = new MenuBar();
+
+		// menus
+		this.menu1 = new Menu("File");
+
+		// items
+		this.item1 = new MenuItem("close");
+
+		// setup menubar
+		this.menu1.getItems().add(this.item1);
+		this.mb.getMenus().add(this.menu1);
 
 		// event listeners
 		initListeners();
 
+		this.rootLayout.setTop(this.mb);
 		this.verticalLayout.getChildren().addAll(this.button, this.button2, this.button3);
 
 	}
@@ -88,6 +109,7 @@ public class ColorBlindWindow
 		{
 			this.prefColor = ColorFactory.colorPicker();
 		});
+		this.item1.setOnAction(e -> this.window.close());
 	}
 
 	private void setupLayouts()
@@ -95,6 +117,8 @@ public class ColorBlindWindow
 		this.rootLayout.setRight(this.verticalLayout);
 		this.rootLayout.setCenter(this.centerLayout);
 		this.verticalLayout.setPadding(new Insets(20));
+		this.centerLayout.setPadding(new Insets(10));
+		this.centerLayout.setStyle("-fx-background-color: #DADADA");
 	}
 
 	private void setupWindow(final Rectangle2D screen)

@@ -2,7 +2,7 @@ package application;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-import javafx.beans.value.ChangeListener;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -105,6 +105,8 @@ public class ColorFactory
 		return MAGENTASECONDARY;
 	}
 
+	private static Color c;
+
 	public static Color colorPicker()
 	{
 		final Stage window = new Stage();
@@ -118,30 +120,36 @@ public class ColorFactory
 
 		final Circle outerCircle = new Circle(50);
 		final Circle innerCircle = new Circle(30);
+
 		outerCircle.setFill(magentaMain());
 		innerCircle.setFill(magentaSecondary());
 		// final Shape wholeCircle = Shape.subtract(outerCircle, innerCircle);
 		final Slider slider = new Slider(155, 190, 170);
-		slider.valueProperty().addListener((ChangeListener<Number>) (ov, old_val, new_val) ->
+		slider.valueProperty().addListener((observable, oldValue, newValue) ->
 		{
-			innerCircle.setFill(new Color(normalize(255), normalize(0), normalize(new_val.doubleValue()), 1));
+
+			innerCircle.setFill(new Color(normalize(255), normalize(0), normalize(newValue.doubleValue()), 1));
 		});
 
 		final Button okButton = new Button("Select current");
 		okButton.setOnAction(e ->
 		{
+			c = (Color) innerCircle.getFill();
 			window.close();
 		});
 
+		okButton.setPrefWidth(250);
 		final VBox layout = new VBox(20);
+		layout.setAlignment(Pos.CENTER);
+		layout.setPadding(new Insets(20));
 		final StackPane stackCircle = new StackPane();
 		stackCircle.getChildren().addAll(outerCircle, innerCircle);
 		layout.getChildren().addAll(label, stackCircle, slider, okButton);
 
 		final Scene scene = new Scene(layout);
 		window.setScene(scene);
-		window.show();
-		return (Color) innerCircle.getFill();
-
+		window.setResizable(false);
+		window.showAndWait();
+		return c;
 	}
 }
