@@ -33,13 +33,15 @@ const (
 )
 
 type ColorBlindApp struct {
-	fyneApp      fyne.App
-	window       fyne.Window
-	plateImage   *canvas.Image
-	plate        *generator.Plate
-	density      int
-	blueValue    uint8
-	summaryLabel *widget.Label
+	fyneApp       fyne.App
+	window        fyne.Window
+	plateImage    *canvas.Image
+	plate         *generator.Plate
+	density       int
+	blueValue     uint8
+	summaryLabel  *widget.Label
+	showOutline   bool
+	confuserColor *color.NRGBA
 }
 
 func New() *ColorBlindApp {
@@ -56,6 +58,7 @@ func (a *ColorBlindApp) Run() {
 	a.window = a.fyneApp.NewWindow("ColorBlind")
 	a.setupUI()
 	a.window.Resize(fyne.NewSize(defaultWidth, defaultHeight))
+	a.regenerateAndRender()
 	a.window.ShowAndRun()
 }
 
@@ -126,11 +129,24 @@ func (a *ColorBlindApp) buildSidebar() fyne.CanvasObject {
 		colorSlider,
 	))
 
+	confuserPicker := newHSVPicker(func(c color.NRGBA) {
+		a.confuserColor = &c
+		a.render()
+	})
+	confuserCard := widget.NewCard("", "Confuser (10%)", confuserPicker.Container)
+
+	outlineCheck := widget.NewCheck("Show hidden shape", func(checked bool) {
+		a.showOutline = checked
+		a.render()
+	})
+
 	sidebar := container.NewVBox(
 		container.NewPadded(generateBtn),
 		container.NewPadded(a.summaryLabel),
 		densityCard,
 		colorCard,
+		confuserCard,
+		container.NewPadded(outlineCheck),
 	)
 
 	sized := container.New(layout.NewGridWrapLayout(fyne.NewSize(sidebarWidth, 0)), sidebar)
@@ -155,7 +171,7 @@ func (a *ColorBlindApp) render() {
 	if a.plate == nil {
 		return
 	}
-	img := a.plate.Render(a.revealColor())
+	img := a.plate.Render(a.revealColor(), a.confuserColor, a.showOutline)
 	a.plateImage.Image = img
 	a.plateImage.Refresh()
 }

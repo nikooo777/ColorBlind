@@ -3,15 +3,19 @@ package generator
 import (
 	"image"
 	"image/color"
+	"math/rand/v2"
 
 	"github.com/niko/colorblind/internal/palette"
 )
+
+const confuserFraction = 0.10
 
 type Plate struct {
 	Width, Height int
 	circles       []Circle
 	shape         Circle
 	intersecting  []int
+	confusers     []int
 }
 
 func NewPlate(width, height, density int) *Plate {
@@ -25,9 +29,18 @@ func (p *Plate) generate(density int) {
 	p.shape = HiddenShape(float64(p.Width), float64(p.Height))
 
 	p.intersecting = nil
+	p.confusers = nil
+	intersectingSet := make(map[int]bool)
 	for i, c := range p.circles {
 		if intersects(c, p.shape) {
 			p.intersecting = append(p.intersecting, i)
+			intersectingSet[i] = true
+		}
+	}
+
+	for i := range p.circles {
+		if !intersectingSet[i] && rand.Float64() < confuserFraction {
+			p.confusers = append(p.confusers, i)
 		}
 	}
 }
@@ -40,13 +53,16 @@ func (p *Plate) CircleCount() int {
 	return len(p.circles)
 }
 
-func (p *Plate) Render(revealColor color.NRGBA) *image.NRGBA {
+func (p *Plate) Render(revealColor color.NRGBA, confuserColor *color.NRGBA, showOutline bool) *image.NRGBA {
+	for i := range p.circles {
+		p.circles[i].Color = palette.MagentaMain
+	}
 	for _, i := range p.intersecting {
 		p.circles[i].Color = revealColor
 	}
-	for i, c := range p.circles {
-		if c.Color != revealColor && c.Color != palette.MagentaMain {
-			p.circles[i].Color = palette.MagentaMain
+	if confuserColor != nil {
+		for _, i := range p.confusers {
+			p.circles[i].Color = *confuserColor
 		}
 	}
 
@@ -57,7 +73,33 @@ func (p *Plate) Render(revealColor color.NRGBA) *image.NRGBA {
 		drawFilledCircle(img, c)
 	}
 
+	if showOutline {
+		drawCircleOutline(img, p.shape, color.NRGBA{A: 255}, 2)
+	}
+
 	return img
+}
+
+func drawCircleOutline(img *image.NRGBA, c Circle, col color.NRGBA, thickness float64) {
+	cx := int(c.X)
+	cy := int(c.Y)
+	r := int(c.Radius) + int(thickness) + 1
+	bounds := img.Bounds()
+
+	outerSq := (c.Radius + thickness/2) * (c.Radius + thickness/2)
+	innerSq := (c.Radius - thickness/2) * (c.Radius - thickness/2)
+
+	for dy := -r; dy <= r; dy++ {
+		for dx := -r; dx <= r; dx++ {
+			dSq := float64(dx*dx + dy*dy)
+			if dSq <= outerSq && dSq >= innerSq {
+				px, py := cx+dx, cy+dy
+				if px >= bounds.Min.X && px < bounds.Max.X && py >= bounds.Min.Y && py < bounds.Max.Y {
+					img.SetNRGBA(px, py, col)
+				}
+			}
+		}
+	}
 }
 
 func fillBackground(img *image.NRGBA) {
