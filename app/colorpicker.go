@@ -38,9 +38,12 @@ type hsvPicker struct {
 	Container    fyne.CanvasObject
 }
 
+var defaultConfuserColor = confuserPresets[1].color
+
 func newHSVPicker(onChanged func(color.NRGBA)) *hsvPicker {
+	h, s, v := rgbToHSV(defaultConfuserColor)
 	p := &hsvPicker{
-		h: 300, s: 1, v: 1,
+		h: h, s: s, v: v,
 		onChanged: onChanged,
 	}
 
@@ -267,8 +270,7 @@ func (b *hsvBar) draw(w, h int) image.Image {
 
 	for py := 0; py < h; py++ {
 		v := 1.0 - float64(py)/float64(h-1)
-		gray := uint8(v * 255)
-		c := color.NRGBA{R: gray, G: gray, B: gray, A: 255}
+		c := hsvToRGB(b.picker.h, b.picker.s, v)
 		for px := 0; px < w; px++ {
 			img.SetNRGBA(px, py, c)
 		}

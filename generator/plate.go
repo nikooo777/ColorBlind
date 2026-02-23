@@ -47,11 +47,17 @@ func (p *Plate) generate(density int) {
 		}
 	}
 
+	var nonIntersecting []int
 	for i := range p.circles {
-		if !intersectingSet[i] && rand.Float64() < confuserFraction {
-			p.confusers = append(p.confusers, i)
+		if !intersectingSet[i] {
+			nonIntersecting = append(nonIntersecting, i)
 		}
 	}
+	confuserCount := int(float64(len(nonIntersecting)) * confuserFraction)
+	rand.Shuffle(len(nonIntersecting), func(i, j int) {
+		nonIntersecting[i], nonIntersecting[j] = nonIntersecting[j], nonIntersecting[i]
+	})
+	p.confusers = nonIntersecting[:confuserCount]
 }
 
 func (p *Plate) Regenerate(density int) {

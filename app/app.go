@@ -130,6 +130,12 @@ func (a *ColorBlindApp) buildSidebar() fyne.CanvasObject {
 	textEntry.OnChanged = func(s string) {
 		a.shapeText = s
 	}
+	textEntry.Validator = func(s string) error {
+		if a.shapeMode == "Text" && s == "" {
+			return fmt.Errorf("text required")
+		}
+		return nil
+	}
 
 	shapeRadio := widget.NewRadioGroup([]string{"Circle", "Text"}, func(selected string) {
 		a.shapeMode = selected
@@ -138,6 +144,7 @@ func (a *ColorBlindApp) buildSidebar() fyne.CanvasObject {
 		} else {
 			textEntry.Disable()
 		}
+		textEntry.Validate()
 	})
 	shapeRadio.Horizontal = true
 	shapeRadio.SetSelected("Circle")
@@ -161,6 +168,8 @@ func (a *ColorBlindApp) buildSidebar() fyne.CanvasObject {
 		a.confuserColor = &c
 		a.render()
 	})
+	initialConfuser := confuserPicker.currentColor()
+	a.confuserColor = &initialConfuser
 	confuserCard := widget.NewCard("", "Confuser (10%)", confuserPicker.Container)
 
 	outlineToggle := newToggleSwitch(func(on bool) {
@@ -203,6 +212,10 @@ func (a *ColorBlindApp) shapeFactory() func(w, h int) generator.Shape {
 }
 
 func (a *ColorBlindApp) regenerateAndRender() {
+	if a.shapeMode == "Text" && a.shapeText == "" {
+		a.summaryLabel.SetText("Enter text first")
+		return
+	}
 	factory := a.shapeFactory()
 	if a.plate == nil {
 		a.plate = generator.NewPlate(plateWidth, plateHeight, a.density, factory)

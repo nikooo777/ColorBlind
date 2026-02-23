@@ -63,7 +63,7 @@ func NewTextShape(text string, fontData []byte, plateWidth, plateHeight int) *Te
 	}
 	defer face.Close()
 
-	textW, textH, baseline := measureWithSpacing(face, text, spacing)
+	textW, textH, baseline, leftBearing := measureWithSpacing(face, text, spacing)
 	if textW <= 0 || textH <= 0 {
 		return newFallbackCircle(plateWidth, plateHeight)
 	}
@@ -73,7 +73,7 @@ func NewTextShape(text string, fontData []byte, plateWidth, plateHeight int) *Te
 		Dst:  img,
 		Src:  image.NewUniform(color.White),
 		Face: face,
-		Dot:  fixed.P(0, baseline),
+		Dot:  fixed.P(leftBearing, baseline),
 	}
 	drawStringWithSpacing(&drawer, text, spacing)
 
@@ -95,9 +95,10 @@ func NewTextShape(text string, fontData []byte, plateWidth, plateHeight int) *Te
 	}
 }
 
-func measureWithSpacing(face font.Face, text string, spacing fixed.Int26_6) (w, h, baseline int) {
+func measureWithSpacing(face font.Face, text string, spacing fixed.Int26_6) (w, h, baseline, leftBearing int) {
 	runes := []rune(text)
-	var totalAdvance fixed.Int26_6
+	var cursor fixed.Int26_6
+	var minX, maxX fixed.Int26_6
 	var minY, maxY fixed.Int26_6
 
 	for i, r := range runes {
@@ -105,9 +106,20 @@ func measureWithSpacing(face font.Face, text string, spacing fixed.Int26_6) (w, 
 		if !ok {
 			continue
 		}
-		totalAdvance += advance
+		glyphLeft := cursor + bounds.Min.X
+		glyphRight := cursor + bounds.Max.X
+		if i == 0 || glyphLeft < minX {
+			minX = glyphLeft
+		}
+		if glyphRight > maxX {
+			maxX = glyphRight
+		}
+		cursor += advance
+		if cursor > maxX {
+			maxX = cursor
+		}
 		if i < len(runes)-1 {
-			totalAdvance += spacing
+			cursor += spacing
 		}
 		if bounds.Min.Y < minY {
 			minY = bounds.Min.Y
@@ -117,7 +129,7 @@ func measureWithSpacing(face font.Face, text string, spacing fixed.Int26_6) (w, 
 		}
 	}
 
-	return totalAdvance.Ceil(), (maxY - minY).Ceil(), (-minY).Ceil()
+	return (maxX - minX).Ceil(), (maxY - minY).Ceil(), (-minY).Ceil(), (-minX).Ceil()
 }
 
 func drawStringWithSpacing(d *font.Drawer, text string, spacing fixed.Int26_6) {
@@ -147,7 +159,7 @@ func findFontSize(f *opentype.Font, text string, targetW, targetH float64) float
 		}
 
 		spacing := fixed.I(int(mid * letterSpacingFactor))
-		w, h, _ := measureWithSpacing(face, text, spacing)
+		w, h, _, _ := measureWithSpacing(face, text, spacing)
 		face.Close()
 
 		if float64(w) <= targetW && float64(h) <= targetH {

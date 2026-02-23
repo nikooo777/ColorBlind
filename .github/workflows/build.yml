@@ -1,0 +1,106 @@
+name: Build & Release
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["*"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            artifact: colorblind
+          - goos: windows
+            goarch: amd64
+            artifact: colorblind.exe
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.x"
+
+      - name: Install fyne-cross
+        run: go install github.com/fyne-io/fyne-cross@latest
+
+      - name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+        run: fyne-cross ${{ matrix.goos }} -arch ${{ matrix.goarch }} -app-id com.colorblind.app -output colorblind
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: colorblind-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: fyne-cross/bin/${{ matrix.goos }}-${{ matrix.goarch }}/${{ matrix.artifact }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Get commit info
+        id: commit
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Package release assets
+        run: |
+          cd artifacts/colorblind-linux-amd64
+          tar czf ../../colorblind-linux-amd64.tar.gz colorblind
+          cd ../colorblind-windows-amd64
+          zip ../../colorblind-windows-amd64.zip colorblind.exe
+
+      - name: Create latest release
+        if: github.ref_name == 'master'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: latest
+          name: Latest Release
+          artifacts: "colorblind-linux-amd64.tar.gz,colorblind-windows-amd64.zip"
+          allowUpdates: true
+          replacesArtifacts: true
+          makeLatest: true
+          prerelease: false
+          body: |
+            Latest build from `master`
+
+            Commit: ${{ github.sha }}
+            Short SHA: ${{ steps.commit.outputs.short_sha }}
+            Built on: ${{ github.event.head_commit.timestamp }}
+
+      - name: Create branch pre-release
+        if: github.ref_name != 'master'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: "Pre-release: ${{ github.ref_name }}"
+          artifacts: "colorblind-linux-amd64.tar.gz,colorblind-windows-amd64.zip"
+          allowUpdates: true
+          replacesArtifacts: true
+          makeLatest: false
+          prerelease: true
+          body: |
+            Pre-release build from branch: `${{ github.ref_name }}`
+
+            Commit: ${{ github.sha }}
+            Short SHA: ${{ steps.commit.outputs.short_sha }}
+            Built on: ${{ github.event.head_commit.timestamp }}

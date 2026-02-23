@@ -1,6 +1,6 @@
 module github.com/niko/colorblind
 
-go 1.25.7
+go 1.24
 
 require (
 	fyne.io/fyne/v2 v2.7.3

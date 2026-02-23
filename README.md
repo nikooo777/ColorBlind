@@ -50,7 +50,7 @@ The app applies this same principle visually — using two nearly identical mage
 
 ![Example output](reverse_colorblind.png)
 
-See [old output examples/](old%20output%20examples/) for outputs from the original Java version.
+See [old output examples/](old%20output%20examples/) for outputs from the original Java version, or check out the [`original-java`](https://github.com/nikooo777/ColorBlind/tree/original-java) branch for the original JavaFX implementation — a learning project for OOP and JavaFX.
 
 ## Building
 
