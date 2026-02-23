@@ -3,21 +3,24 @@ package app
 import (
 	"fmt"
 	"image/color"
+	"image/png"
+	"os"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
-	"github.com/niko/colorblind/internal/generator"
+	"github.com/niko/colorblind/generator"
 )
 
 const (
-	defaultWidth  = 960
-	defaultHeight = 720
+	defaultWidth  = 1100
+	defaultHeight = 1150
 	plateWidth    = 700
 	plateHeight   = 650
 
@@ -42,6 +45,8 @@ type ColorBlindApp struct {
 	summaryLabel  *widget.Label
 	showOutline   bool
 	confuserColor *color.NRGBA
+	shapeMode     string
+	shapeText     string
 }
 
 func New() *ColorBlindApp {
@@ -51,6 +56,7 @@ func New() *ColorBlindApp {
 		fyneApp:   a,
 		density:   defaultDensity,
 		blueValue: defaultBlue,
+		shapeMode: "Circle",
 	}
 }
 
@@ -65,19 +71,18 @@ func (a *ColorBlindApp) Run() {
 func (a *ColorBlindApp) setupUI() {
 	a.plateImage = canvas.NewImageFromImage(nil)
 	a.plateImage.FillMode = canvas.ImageFillContain
-	a.plateImage.SetMinSize(fyne.NewSize(plateWidth, plateHeight))
-
-	plateContainer := container.NewCenter(a.plateImage)
 
 	sidebar := a.buildSidebar()
 
 	sep := widget.NewSeparator()
 	sidebarWithSep := container.NewBorder(nil, nil, sep, nil, sidebar)
 
-	content := container.NewBorder(nil, nil, nil, sidebarWithSep, plateContainer)
+	content := container.NewBorder(nil, nil, nil, sidebarWithSep, a.plateImage)
 	a.window.SetContent(content)
 
 	menu := fyne.NewMenu("File",
+		fyne.NewMenuItem("Save PNG...", func() { a.savePNG() }),
+		fyne.NewMenuItemSeparator(),
 		fyne.NewMenuItem("Quit", func() { a.fyneApp.Quit() }),
 	)
 	a.window.SetMainMenu(fyne.NewMainMenu(menu))
@@ -119,6 +124,29 @@ func (a *ColorBlindApp) buildSidebar() fyne.CanvasObject {
 	a.summaryLabel = widget.NewLabel("")
 	a.summaryLabel.Alignment = fyne.TextAlignCenter
 
+	textEntry := widget.NewEntry()
+	textEntry.SetPlaceHolder("Enter text...")
+	textEntry.Disable()
+	textEntry.OnChanged = func(s string) {
+		a.shapeText = s
+	}
+
+	shapeRadio := widget.NewRadioGroup([]string{"Circle", "Text"}, func(selected string) {
+		a.shapeMode = selected
+		if selected == "Text" {
+			textEntry.Enable()
+		} else {
+			textEntry.Disable()
+		}
+	})
+	shapeRadio.Horizontal = true
+	shapeRadio.SetSelected("Circle")
+
+	shapeCard := widget.NewCard("", "Hidden Shape", container.NewVBox(
+		shapeRadio,
+		textEntry,
+	))
+
 	densityCard := widget.NewCard("", "Circle Density", container.NewVBox(
 		densityLabel,
 		densitySlider,
@@ -135,32 +163,51 @@ func (a *ColorBlindApp) buildSidebar() fyne.CanvasObject {
 	})
 	confuserCard := widget.NewCard("", "Confuser (10%)", confuserPicker.Container)
 
-	outlineCheck := widget.NewCheck("Show hidden shape", func(checked bool) {
-		a.showOutline = checked
+	outlineToggle := newToggleSwitch(func(on bool) {
+		a.showOutline = on
 		a.render()
 	})
+	outlineRow := container.NewHBox(widget.NewLabel("Show Shape"), outlineToggle)
+	outlineCard := widget.NewCard("", "", outlineRow)
 
-	sidebar := container.NewVBox(
+	sidebarContent := container.NewVBox(
 		container.NewPadded(generateBtn),
 		container.NewPadded(a.summaryLabel),
+		shapeCard,
 		densityCard,
 		colorCard,
 		confuserCard,
-		container.NewPadded(outlineCheck),
+		outlineCard,
 	)
 
-	sized := container.New(layout.NewGridWrapLayout(fyne.NewSize(sidebarWidth, 0)), sidebar)
-	return sized
+	scrollable := container.NewVScroll(sidebarContent)
+	scrollable.SetMinSize(fyne.NewSize(sidebarWidth, 0))
+	return scrollable
 }
 
 func (a *ColorBlindApp) revealColor() color.NRGBA {
 	return color.NRGBA{R: 255, G: 0, B: a.blueValue, A: 255}
 }
 
+func (a *ColorBlindApp) shapeFactory() func(w, h int) generator.Shape {
+	if a.shapeMode == "Text" && a.shapeText != "" {
+		text := a.shapeText
+		fontData := theme.DefaultTextBoldFont().Content()
+		return func(w, h int) generator.Shape {
+			return generator.NewTextShape(text, fontData, w, h)
+		}
+	}
+	return func(w, h int) generator.Shape {
+		return generator.NewCircleShape(float64(w), float64(h))
+	}
+}
+
 func (a *ColorBlindApp) regenerateAndRender() {
+	factory := a.shapeFactory()
 	if a.plate == nil {
-		a.plate = generator.NewPlate(plateWidth, plateHeight, a.density)
+		a.plate = generator.NewPlate(plateWidth, plateHeight, a.density, factory)
 	} else {
+		a.plate.SetShapeFactory(factory)
 		a.plate.Regenerate(a.density)
 	}
 	a.summaryLabel.SetText(fmt.Sprintf("Placed: %d / %d", a.plate.CircleCount(), a.density))
@@ -174,4 +221,31 @@ func (a *ColorBlindApp) render() {
 	img := a.plate.Render(a.revealColor(), a.confuserColor, a.showOutline)
 	a.plateImage.Image = img
 	a.plateImage.Refresh()
+}
+
+func (a *ColorBlindApp) savePNG() {
+	if a.plateImage.Image == nil {
+		return
+	}
+	d := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
+		if err != nil || writer == nil {
+			return
+		}
+		defer writer.Close()
+		err = png.Encode(writer, a.plateImage.Image)
+		if err != nil {
+			dialog.ShowError(err, a.window)
+		}
+	}, a.window)
+	d.SetFilter(storage.NewExtensionFileFilter([]string{".png"}))
+	d.SetFileName("reverse_colorblind.png")
+	cwd, err := os.Getwd()
+	if err == nil {
+		uri := storage.NewFileURI(cwd)
+		listable, err := storage.ListerForURI(uri)
+		if err == nil {
+			d.SetLocation(listable)
+		}
+	}
+	d.Show()
 }

@@ -28,13 +28,14 @@ var confuserPresets = []struct {
 }
 
 type hsvPicker struct {
-	h, s, v   float64
-	field     *hsvField
-	bar       *hsvBar
-	swatch    *canvas.Rectangle
-	hexLabel  *widget.Label
-	onChanged func(color.NRGBA)
-	Container fyne.CanvasObject
+	h, s, v      float64
+	field        *hsvField
+	bar          *hsvBar
+	swatch       *canvas.Rectangle
+	hexEntry     *widget.Entry
+	updatingHex  bool
+	onChanged    func(color.NRGBA)
+	Container    fyne.CanvasObject
 }
 
 func newHSVPicker(onChanged func(color.NRGBA)) *hsvPicker {
@@ -48,8 +49,25 @@ func newHSVPicker(onChanged func(color.NRGBA)) *hsvPicker {
 	p.swatch.SetMinSize(fyne.NewSize(0, 24))
 	p.swatch.CornerRadius = 4
 
-	p.hexLabel = widget.NewLabel(colorToHex(c))
-	p.hexLabel.Alignment = fyne.TextAlignCenter
+	p.hexEntry = widget.NewEntry()
+	p.hexEntry.SetText(colorToHex(c))
+	p.hexEntry.OnChanged = func(s string) {
+		if p.updatingHex {
+			return
+		}
+		parsed, ok := parseHex(s)
+		if !ok {
+			return
+		}
+		p.h, p.s, p.v = rgbToHSV(parsed)
+		p.field.Refresh()
+		p.bar.Refresh()
+		p.swatch.FillColor = parsed
+		p.swatch.Refresh()
+		if p.onChanged != nil {
+			p.onChanged(parsed)
+		}
+	}
 
 	p.field = newHSVField(p)
 	p.bar = newHSVBar(p)
@@ -68,10 +86,10 @@ func newHSVPicker(onChanged func(color.NRGBA)) *hsvPicker {
 	presets := container.New(layout.NewGridLayout(len(confuserPresets)), presetSwatches...)
 
 	p.Container = container.NewVBox(
-		p.swatch,
-		p.hexLabel,
 		presets,
 		container.NewHBox(fieldBox, barBox),
+		p.swatch,
+		p.hexEntry,
 	)
 
 	return p
@@ -92,7 +110,9 @@ func (p *hsvPicker) notify() {
 	c := p.currentColor()
 	p.swatch.FillColor = c
 	p.swatch.Refresh()
-	p.hexLabel.SetText(colorToHex(c))
+	p.updatingHex = true
+	p.hexEntry.SetText(colorToHex(c))
+	p.updatingHex = false
 	if p.onChanged != nil {
 		p.onChanged(c)
 	}
@@ -100,6 +120,21 @@ func (p *hsvPicker) notify() {
 
 func colorToHex(c color.NRGBA) string {
 	return fmt.Sprintf("#%02X%02X%02X", c.R, c.G, c.B)
+}
+
+func parseHex(s string) (color.NRGBA, bool) {
+	if len(s) > 0 && s[0] == '#' {
+		s = s[1:]
+	}
+	if len(s) != 6 {
+		return color.NRGBA{}, false
+	}
+	var r, g, b uint8
+	_, err := fmt.Sscanf(s, "%02x%02x%02x", &r, &g, &b)
+	if err != nil {
+		return color.NRGBA{}, false
+	}
+	return color.NRGBA{R: r, G: g, B: b, A: 255}, true
 }
 
 // --- tappable preset swatch ---

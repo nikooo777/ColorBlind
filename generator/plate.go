@@ -5,7 +5,7 @@ import (
 	"image/color"
 	"math/rand/v2"
 
-	"github.com/niko/colorblind/internal/palette"
+	"github.com/niko/colorblind/palette"
 )
 
 const confuserFraction = 0.10
@@ -13,26 +13,35 @@ const confuserFraction = 0.10
 type Plate struct {
 	Width, Height int
 	circles       []Circle
-	shape         Circle
+	shape         Shape
+	shapeFactory  func(w, h int) Shape
 	intersecting  []int
 	confusers     []int
 }
 
-func NewPlate(width, height, density int) *Plate {
-	p := &Plate{Width: width, Height: height}
+func NewPlate(width, height, density int, shapeFactory func(w, h int) Shape) *Plate {
+	p := &Plate{
+		Width:        width,
+		Height:       height,
+		shapeFactory: shapeFactory,
+	}
 	p.generate(density)
 	return p
 }
 
+func (p *Plate) SetShapeFactory(factory func(w, h int) Shape) {
+	p.shapeFactory = factory
+}
+
 func (p *Plate) generate(density int) {
 	p.circles = GenerateCircles(float64(p.Width), float64(p.Height), density)
-	p.shape = HiddenShape(float64(p.Width), float64(p.Height))
+	p.shape = p.shapeFactory(p.Width, p.Height)
 
 	p.intersecting = nil
 	p.confusers = nil
 	intersectingSet := make(map[int]bool)
 	for i, c := range p.circles {
-		if intersects(c, p.shape) {
+		if p.shape.Intersects(c) {
 			p.intersecting = append(p.intersecting, i)
 			intersectingSet[i] = true
 		}
@@ -74,7 +83,7 @@ func (p *Plate) Render(revealColor color.NRGBA, confuserColor *color.NRGBA, show
 	}
 
 	if showOutline {
-		drawCircleOutline(img, p.shape, color.NRGBA{A: 255}, 2)
+		p.shape.DrawOutline(img)
 	}
 
 	return img

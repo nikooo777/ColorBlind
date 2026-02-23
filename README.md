@@ -44,6 +44,14 @@ a clearly identifiable shape.
 
 The app applies this same principle visually — using two nearly identical magenta shades that only become distinguishable to people with specific color vision deficiencies.
 
+## Screenshots
+
+![App UI](program_preview.png)
+
+![Example output](reverse_colorblind.png)
+
+See [old output examples/](old%20output%20examples/) for outputs from the original Java version.
+
 ## Building
 
 Requires Go and Fyne system libraries on Linux:
@@ -53,12 +61,16 @@ sudo apt-get install libgl-dev libx11-dev libxrandr-dev libxxf86vm-dev libxi-dev
 ```
 
 ```bash
-go build -o colorblind ./cmd/colorblind
+go build -o colorblind .
 ./colorblind
 ```
 
 ## Controls
 
 - **Generate** — creates a new plate with randomized circle positions and a hidden shape
+- **Hidden Shape** — choose between a random circle or custom text as the hidden pattern
 - **Density slider** — controls how many circles to place (10–2000)
 - **Shade slider** — adjusts the magenta shade used for the hidden pattern; move it until the difference is barely perceptible to you
+- **Confuser color** — pick a third color (via HSV picker, hex input, or presets) applied to 10% of non-shape circles to add visual noise
+- **Show Shape toggle** — reveals the hidden shape outline for verification
+- **File → Save PNG** — export the current plate as a PNG image

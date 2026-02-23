@@ -5,7 +5,7 @@ import (
 	"math"
 	"math/rand/v2"
 
-	"github.com/niko/colorblind/internal/palette"
+	"github.com/niko/colorblind/palette"
 )
 
 const (
