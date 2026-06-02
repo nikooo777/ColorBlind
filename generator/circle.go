@@ -5,12 +5,21 @@ import (
 	"math"
 	"math/rand/v2"
 
-	"github.com/niko/colorblind/palette"
+	"github.com/nikooo777/ColorBlind/palette"
 )
 
 const (
-	maxAttemptsPer = 500
-	tierMaxRadius  = 12.0
+	maxAttemptsPer            = 500
+	standardScaleStartDensity = 1500
+	standardScaleEndDensity   = 7000
+	standardMinScale          = 0.43
+)
+
+type CircleProfile int
+
+const (
+	CircleProfileStandard CircleProfile = iota
+	CircleProfileFine
 )
 
 type Circle struct {
@@ -24,20 +33,39 @@ type radiusTier struct {
 	fraction   float64
 }
 
-var tiers = []radiusTier{
-	{9, 12, 0.20},
-	{6, 9, 0.35},
-	{3, 6, 0.45},
+type circleProfileConfig struct {
+	tiers     []radiusTier
+	maxRadius float64
+}
+
+var standardCircleProfile = circleProfileConfig{
+	tiers: []radiusTier{
+		{9, 12, 0.20},
+		{6, 9, 0.35},
+		{3, 6, 0.45},
+	},
+	maxRadius: 12,
+}
+
+var fineCircleProfile = circleProfileConfig{
+	tiers: []radiusTier{
+		{4.5, 6.5, 0.15},
+		{3, 4.5, 0.35},
+		{1.8, 3, 0.50},
+	},
+	maxRadius: 6.5,
 }
 
 type spatialGrid struct {
 	cellSize float64
+	maxR     float64
 	cells    map[[2]int][]int
 }
 
-func newSpatialGrid(cellSize float64) *spatialGrid {
+func newSpatialGrid(maxR float64) *spatialGrid {
 	return &spatialGrid{
-		cellSize: cellSize,
+		cellSize: maxR * 2,
+		maxR:     maxR,
 		cells:    make(map[[2]int][]int),
 	}
 }
@@ -53,7 +81,7 @@ func (g *spatialGrid) insert(idx int, c Circle) {
 
 func (g *spatialGrid) hasOverlap(c Circle, circles []Circle) bool {
 	key := g.cellKey(c.X, c.Y)
-	spread := int(math.Ceil((tierMaxRadius*2)/g.cellSize)) + 1
+	spread := int(math.Ceil((c.Radius+g.maxR)/g.cellSize)) + 1
 
 	for dx := -spread; dx <= spread; dx++ {
 		for dy := -spread; dy <= spread; dy++ {
@@ -68,14 +96,15 @@ func (g *spatialGrid) hasOverlap(c Circle, circles []Circle) bool {
 	return false
 }
 
-func GenerateCircles(width, height float64, maxCount int) []Circle {
+func generateCircles(width, height float64, maxCount int, profile CircleProfile) []Circle {
+	config := circleProfileFor(profile, maxCount)
 	circles := make([]Circle, 0, maxCount)
-	grid := newSpatialGrid(tierMaxRadius * 2)
+	grid := newSpatialGrid(config.maxRadius)
 
 	remaining := maxCount
-	for ti, tier := range tiers {
+	for ti, tier := range config.tiers {
 		var tierTarget int
-		if ti == len(tiers)-1 {
+		if ti == len(config.tiers)-1 {
 			tierTarget = remaining
 		} else {
 			tierTarget = int(math.Round(float64(maxCount) * tier.fraction))
@@ -110,19 +139,45 @@ func GenerateCircles(width, height float64, maxCount int) []Circle {
 	return circles
 }
 
+func circleProfileFor(profile CircleProfile, density int) circleProfileConfig {
+	if profile == CircleProfileFine {
+		return fineCircleProfile
+	}
+	return scaleCircleProfile(standardCircleProfile, standardScaleForDensity(density))
+}
+
+func standardScaleForDensity(density int) float64 {
+	if density <= standardScaleStartDensity {
+		return 1
+	}
+	if density >= standardScaleEndDensity {
+		return standardMinScale
+	}
+
+	progress := float64(density-standardScaleStartDensity) / float64(standardScaleEndDensity-standardScaleStartDensity)
+	return 1 - progress*(1-standardMinScale)
+}
+
+func scaleCircleProfile(profile circleProfileConfig, scale float64) circleProfileConfig {
+	scaledTiers := make([]radiusTier, len(profile.tiers))
+	for i, tier := range profile.tiers {
+		scaledTiers[i] = radiusTier{
+			minR:     tier.minR * scale,
+			maxR:     tier.maxR * scale,
+			fraction: tier.fraction,
+		}
+	}
+	return circleProfileConfig{
+		tiers:     scaledTiers,
+		maxRadius: profile.maxRadius * scale,
+	}
+}
+
 func HiddenShape(width, height float64) Circle {
 	r := height / 3.0
 	return Circle{
 		X:      r + rand.Float64()*(width-2*r),
 		Y:      height / 2.0,
 		Radius: r,
-	}
-}
-
-func RevealSecret(circles []Circle, shape Circle, revealColor color.NRGBA) {
-	for i := range circles {
-		if intersects(circles[i], shape) {
-			circles[i].Color = revealColor
-		}
 	}
 }
