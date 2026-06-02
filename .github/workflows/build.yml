@@ -70,6 +70,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v8.0.1
         with:
+          name: huecipher-linux-amd64
           path: artifacts
 
       - name: Get commit info
@@ -77,7 +78,7 @@ jobs:
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Prepare release assets
-        run: cp artifacts/huecipher-linux-amd64/huecipher-linux-amd64.tar.gz .
+        run: cp artifacts/huecipher-linux-amd64.tar.gz .
 
       - name: Create latest release
         if: github.ref_name == 'master'
