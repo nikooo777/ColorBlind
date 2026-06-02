@@ -52,7 +52,66 @@ The app applies this same principle visually — using two nearly identical mage
 
 See [old output examples/](old%20output%20examples/) for outputs from the original Java version, or check out the [`original-java`](https://github.com/nikooo777/ColorBlind/tree/original-java) branch for the original JavaFX implementation — a learning project for OOP and JavaFX.
 
-## Building
+## Running the app
+
+Check the [latest release](https://github.com/nikooo777/ColorBlind/releases/latest) first.
+
+If there is a download for your operating system, use that instead of trying to run the source code.
+
+Linux:
+
+```bash
+tar xzf huecipher-linux-amd64.tar.gz
+./huecipher
+```
+
+Windows and macOS builds are not published yet. Until they are, you need to build the app from source.
+
+## Build from source on Windows
+
+Install these first:
+
+- [Git](https://git-scm.com/download/win)
+- [Go](https://go.dev/dl/)
+- [Node.js LTS](https://nodejs.org/)
+
+Then open PowerShell and run:
+
+```powershell
+git clone https://github.com/nikooo777/ColorBlind.git
+cd ColorBlind
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+wails dev
+```
+
+To build a Windows `.exe`:
+
+```powershell
+wails build
+.\build\bin\huecipher.exe
+```
+
+If `wails` is not found, close PowerShell, open it again, and retry the command.
+
+## Prompt for AI Help
+
+If you get stuck, paste this into ChatGPT, Claude, or another coding assistant:
+
+```text
+I am on Windows and want to run HueCipher from source.
+Please guide me step by step using PowerShell commands.
+First help me check whether Git, Go, Node.js, and Wails are installed.
+The repo is https://github.com/nikooo777/ColorBlind.
+The commands should eventually be:
+git clone https://github.com/nikooo777/ColorBlind.git
+cd ColorBlind
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+wails dev
+If any command fails, ask me for the exact error and tell me the next command to run.
+Do not assume I know programming.
+```
+
+## Build from source on Linux
 
 Requires Go, Node/npm, the Wails CLI, and Wails Linux system libraries:
 

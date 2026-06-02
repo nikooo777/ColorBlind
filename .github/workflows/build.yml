@@ -3,6 +3,7 @@ name: Build & Release
 on:
   push:
     branches: ["*"]
+    tags: ["v*"]
   pull_request:
     branches: ["*"]
 
@@ -81,7 +82,7 @@ jobs:
         run: cp artifacts/huecipher-linux-amd64.tar.gz .
 
       - name: Create latest release
-        if: github.ref_name == 'master'
+        if: github.ref_type == 'branch' && github.ref_name == 'master'
         uses: ncipollo/release-action@v1.21.0
         with:
           tag: latest
@@ -98,8 +99,25 @@ jobs:
             Short SHA: ${{ steps.commit.outputs.short_sha }}
             Built on: ${{ github.event.head_commit.timestamp }}
 
+      - name: Create tagged release
+        if: github.ref_type == 'tag'
+        uses: ncipollo/release-action@v1.21.0
+        with:
+          tag: ${{ github.ref_name }}
+          name: "HueCipher ${{ github.ref_name }}"
+          artifacts: "huecipher-linux-amd64.tar.gz"
+          allowUpdates: true
+          replacesArtifacts: true
+          makeLatest: true
+          prerelease: false
+          body: |
+            HueCipher release `${{ github.ref_name }}`
+
+            Commit: ${{ github.sha }}
+            Short SHA: ${{ steps.commit.outputs.short_sha }}
+
       - name: Create branch pre-release
-        if: github.ref_name != 'master'
+        if: github.ref_type == 'branch' && github.ref_name != 'master'
         uses: ncipollo/release-action@v1.21.0
         with:
           tag: ${{ github.ref_name }}
