@@ -12,13 +12,16 @@ import (
 )
 
 const (
-	targetWidthFraction  = 0.80
-	targetHeightFraction = 0.25
+	targetWidthFraction  = 0.94
+	targetHeightFraction = 0.32
 	minFontSize          = 12.0
 	maxFontSize          = 500.0
 	binarySearchIters    = 20
 	fontDPI              = 72
-	letterSpacingFactor  = 0.15
+	letterSpacingFactor  = 0.42
+
+	minTextMaskOverlapPixels = 4
+	textMaskOverlapFraction  = 0.16
 )
 
 type TextShape struct {
@@ -200,11 +203,19 @@ func newFallbackCircle(plateWidth, plateHeight int) *TextShape {
 }
 
 func (ts *TextShape) Intersects(c Circle) bool {
+	centerX := int(math.Round(c.X)) - ts.offsetX
+	centerY := int(math.Round(c.Y)) - ts.offsetY
+	if ts.maskAt(centerX, centerY) {
+		return true
+	}
+
 	minX := int(math.Floor(c.X - c.Radius))
 	maxX := int(math.Ceil(c.X + c.Radius))
 	minY := int(math.Floor(c.Y - c.Radius))
 	maxY := int(math.Ceil(c.Y + c.Radius))
 	rSq := c.Radius * c.Radius
+	overlapThreshold := textMaskOverlapThreshold(c.Radius)
+	overlap := 0
 
 	for py := minY; py <= maxY; py++ {
 		my := py - ts.offsetY
@@ -222,12 +233,30 @@ func (ts *TextShape) Intersects(c Circle) bool {
 			dx := float64(px) - c.X
 			dy := float64(py) - c.Y
 			if dx*dx+dy*dy <= rSq {
-				return true
+				overlap++
+				if overlap >= overlapThreshold {
+					return true
+				}
 			}
 		}
 	}
 
 	return false
+}
+
+func (ts *TextShape) maskAt(mx, my int) bool {
+	if mx < 0 || mx >= ts.maskW || my < 0 || my >= ts.maskH {
+		return false
+	}
+	return ts.mask[my*ts.maskW+mx]
+}
+
+func textMaskOverlapThreshold(radius float64) int {
+	threshold := int(math.Round(math.Pi * radius * radius * textMaskOverlapFraction))
+	if threshold < minTextMaskOverlapPixels {
+		return minTextMaskOverlapPixels
+	}
+	return threshold
 }
 
 func (ts *TextShape) DrawOutline(img *image.NRGBA) {

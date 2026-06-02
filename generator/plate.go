@@ -5,7 +5,7 @@ import (
 	"image/color"
 	"math/rand/v2"
 
-	"github.com/niko/colorblind/palette"
+	"github.com/nikooo777/ColorBlind/palette"
 )
 
 const confuserFraction = 0.10
@@ -15,26 +15,24 @@ type Plate struct {
 	circles       []Circle
 	shape         Shape
 	shapeFactory  func(w, h int) Shape
+	circleProfile CircleProfile
 	intersecting  []int
 	confusers     []int
 }
 
-func NewPlate(width, height, density int, shapeFactory func(w, h int) Shape) *Plate {
+func NewPlate(width, height, density int, shapeFactory func(w, h int) Shape, circleProfile CircleProfile) *Plate {
 	p := &Plate{
-		Width:        width,
-		Height:       height,
-		shapeFactory: shapeFactory,
+		Width:         width,
+		Height:        height,
+		shapeFactory:  shapeFactory,
+		circleProfile: circleProfile,
 	}
 	p.generate(density)
 	return p
 }
 
-func (p *Plate) SetShapeFactory(factory func(w, h int) Shape) {
-	p.shapeFactory = factory
-}
-
 func (p *Plate) generate(density int) {
-	p.circles = GenerateCircles(float64(p.Width), float64(p.Height), density)
+	p.circles = generateCircles(float64(p.Width), float64(p.Height), density, p.circleProfile)
 	p.shape = p.shapeFactory(p.Width, p.Height)
 
 	p.intersecting = nil
@@ -58,10 +56,6 @@ func (p *Plate) generate(density int) {
 		nonIntersecting[i], nonIntersecting[j] = nonIntersecting[j], nonIntersecting[i]
 	})
 	p.confusers = nonIntersecting[:confuserCount]
-}
-
-func (p *Plate) Regenerate(density int) {
-	p.generate(density)
 }
 
 func (p *Plate) CircleCount() int {

@@ -1,8 +1,8 @@
-# ColorBlind
+# HueCipher
 
-A Go desktop application that generates Ishihara-style reverse colorblindness test plates.
+A Go/Wails desktop application that generates Ishihara-style reverse colorblindness test plates.
 
-The app fills a canvas with thousands of same-colored circles, then recolors circles inside a hidden shape with a slightly different shade of magenta. To someone with normal color vision, the plate looks uniform. To someone with a specific type of color blindness, the hidden shape becomes clearly visible.
+The app fills a generated plate with thousands of same-colored circles, then recolors circles inside a hidden shape with a slightly different shade of magenta. To someone with normal color vision, the plate looks uniform. To someone with a specific type of color blindness, the hidden shape becomes clearly visible.
 
 ## How it works
 
@@ -54,23 +54,30 @@ See [old output examples/](old%20output%20examples/) for outputs from the origin
 
 ## Building
 
-Requires Go and Fyne system libraries on Linux:
+Requires Go, Node/npm, the Wails CLI, and Wails Linux system libraries:
 
 ```bash
-sudo apt-get install libgl-dev libx11-dev libxrandr-dev libxxf86vm-dev libxi-dev libxcursor-dev libxinerama-dev
+sudo apt install libgtk-3-dev libwebkit2gtk-4.1-dev
+go install github.com/wailsapp/wails/v2/cmd/wails@latest
 ```
 
 ```bash
-go build -o colorblind .
-./colorblind
+wails dev
+```
+
+Production build:
+
+```bash
+wails build
+./build/bin/huecipher
 ```
 
 ## Controls
 
 - **Generate** — creates a new plate with randomized circle positions and a hidden shape
 - **Hidden Shape** — choose between a random circle or custom text as the hidden pattern
-- **Density slider** — controls how many circles to place (10–2000)
+- **Density slider** — controls how many circles to place (10–7000); higher densities use smaller circles for a finer plate
 - **Shade slider** — adjusts the magenta shade used for the hidden pattern; move it until the difference is barely perceptible to you
-- **Confuser color** — pick a third color (via HSV picker, hex input, or presets) applied to 10% of non-shape circles to add visual noise
+- **Confuser color** — pick a third color via swatches, color input, or hex input; it is applied to 10% of non-shape circles to add visual noise
 - **Show Shape toggle** — reveals the hidden shape outline for verification
-- **File → Save PNG** — export the current plate as a PNG image
+- **Save PNG** — export the current plate as a PNG image

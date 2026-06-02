@@ -1,2 +1,7 @@
 /bin/
 /colorblind
+/huecipher
+build/bin
+node_modules
+frontend/node_modules
+frontend/package.json.md5
